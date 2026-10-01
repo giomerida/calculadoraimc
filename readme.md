@@ -154,7 +154,7 @@ Para construir esta lógica de recomendación (qué disciplinas sugerir según e
 ```
 calculadoraimc/
 ├── index.html          # Página principal con formulario y resultados
-├── css/                 # (Sugerido) Hojas de estilo
+├── css/                 # Hojas de estilo
 ├── js/                   # (Sugerido) Lógica de cálculo y recomendación
 └── README.md            # Este archivo
 ```
