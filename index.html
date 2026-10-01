@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KINETIC // Calculadora de IMC y Rendimiento</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              lime: '#22c55e',
+              neon: '#10b981',
+              cyan: '#06b6d4',
+              orange: '#f97316',
+              danger: '#ef4444'
+            }
+          },
+          boxShadow: {
+            'glow-lime': '0 0 25px -5px rgba(34, 197, 94, 0.35)',
+            'glow-cyan': '0 0 25px -5px rgba(6, 182, 212, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom scrollbar and smooth transitions */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+    .sport-grid-bg {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="min-h-full font-sans antialiased sport-grid-bg flex flex-col justify-between selection:bg-brand-lime selection:text-black">
+
+  <header class="w-full border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-400 flex items-center justify-center shadow-glow-lime">
+          <svg class="w-5 h-5 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <span class="font-display font-extrabold text-xl tracking-wider uppercase text-white">KINETIC<span class="text-brand-lime font-black">.IMC</span></span>
+          <span class="hidden sm:inline-block ml-2 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Athletic Suite</span>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <span class="text-xs text-slate-400 block font-medium">Estándar OMS</span>
+          <span class="text-xs text-emerald-400 font-semibold flex items-center gap-1 justify-end">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Precisión Biométrica
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full flex-grow">
+    
+    <!-- Hero / Title -->
+    <div class="text-center max-w-2xl mx-auto mb-10">
+      <h1 class="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl tracking-tight text-white mb-3">
+        Calcula tu <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Índice Corporal</span>
+      </h1>
+      <p class="text-slate-400 text-sm sm:text-base leading-relaxed">
+        Descubre tu clasificación oficial y recibe un plan dinámico de disciplinas deportivas diseñadas para optimizar tu quema calórica y condición física de manera segura.
+      </p>
+    </div>
+
+    <!-- Main Grid: Form + Scales Reference -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Calculator Card (7 Columns) -->
+      <section class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+        <!-- Accent decorative glow -->
+        <div class="absolute -top-24 -right-24 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <form id="bmiForm" class="space-y-6 relative" onsubmit="event.preventDefault(); calculateBMI();">
+          
+          <!-- Gender Selection -->
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Perfil Deportivo</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="relative flex items-center justify-center p-3 rounded-2xl border border-slate-800 bg-slate-950/60 cursor-pointer hover:border-slate-700 transition group has-[:checked]:border-brand-lime has-[:checked]:bg-emerald-950/30">
+                <input type="radio" name="gender" value="male" checked class="peer sr-only">
+                <div class="flex items-center gap-2 text-slate-300 peer-checked:text-emerald-400 font-medium text-sm transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Hombre</span>
+                </div>
+              </label>
+
+              <label class="relative flex items-center justify-center p-3 rounded-2xl border border-slate-800 bg-slate-950/60 cursor-pointer hover:border-slate-700 transition group has-[:checked]:border-cyan-400 has-[:checked]:bg-cyan-950/30">
+                <input type="radio" name="gender" value="female" class="peer sr-only">
+                <div class="flex items-center gap-2 text-slate-300 peer-checked:text-cyan-400 font-medium text-sm transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Mujer</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Age & Activity Tier -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="ageInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Edad</label>
+              <div class="relative">
+                <input 
+                  type="number" 
+                  id="ageInput" 
+                  min="12" 
+                  max="110" 
+                  value="28" 
+                  required
+                  class="w-full bg-slate-950/70 border border-slate-800 rounded-2xl px-4 py-3.5 text-white font-medium focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition text-base"
+                >
+                <span class="absolute right-4 top-3.5 text-xs text-slate-500 font-semibold uppercase">años</span>
+              </div>
+            </div>
+
+            <div>
+              <label for="activityLevel" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Nivel de Actividad Actual</label>
+              <select 
+                id="activityLevel" 
+                class="w-full bg-slate-950/70 border border-slate-800 rounded-2xl px-4 py-3.5 text-slate-200 font-medium focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition text-sm appearance-none cursor-pointer"
+              >
+                <option value="sedentary">Sedentario (poco o ningún ejercicio)</option>
+                <option value="moderate" selected>Moderado (1-3 días a la semana)</option>
+                <option value="active">Activo (4-6 días a la semana)</option>
+                <option value="athlete">Intenso (Atleta / Doble sesión)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Weight (Peso) Input with Slider & Presets -->
+          <div class="space-y-2 pt-2">
+            <div class="flex items-center justify-between">
+              <label for="weightInput" class="text-xs font-semibold uppercase tracking-wider text-slate-400">Peso Corporal</label>
+              <div class="flex items-baseline gap-1">
+                <span id="weightDisplay" class="font-display font-bold text-2xl text-white">76.0</span>
+                <span class="text-xs font-semibold text-emerald-400 uppercase">kg</span>
+              </div>
+            </div>
+
+            <div class="relative flex items-center">
+              <input 
+                type="range" 
+                id="weightSlider" 
+                min="30" 
+                max="200" 
+                step="0.5" 
+                value="76" 
+                class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400 transition"
+              >
+            </div>
+            
+            <div class="flex items-center justify-between gap-2 pt-1">
+              <button type="button" onclick="adjustValue('weightSlider', -1)" class="px-3 py-1 text-xs rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 font-medium transition active:scale-95">-1 kg</button>
+              <div class="text-[11px] text-slate-500 font-mono">Rango: 30 - 200 kg</div>
+              <button type="button" onclick="adjustValue('weightSlider', 1)" class="px-3 py-1 text-xs rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 font-medium transition active:scale-95">+1 kg</button>
+            </div>
+          </div>
+
+          <!-- Height (Estatura) Input with Slider & Presets -->
+          <div class="space-y-2 pt-2">
+            <div class="flex items-center justify-between">
+              <label for="heightSlider" class="text-xs font-semibold uppercase tracking-wider text-slate-400">Estatura</label>
+              <div class="flex items-baseline gap-1">
+                <span id="heightDisplay" class="font-display font-bold text-2xl text-white">175</span>
+                <span class="text-xs font-semibold text-cyan-400 uppercase">cm</span>
+              </div>
+            </div>
+
+            <div class="relative flex items-center">
+              <input 
+                type="range" 
+                id="heightSlider" 
+                min="100" 
+                max="225" 
+                step="1" 
+                value="175" 
+                class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 hover:accent-cyan-300 transition"
+              >
+            </div>
+
+            <div class="flex items-center justify-between gap-2 pt-1">
+              <button type="button" onclick="adjustValue('heightSlider', -1)" class="px-3 py-1 text-xs rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 font-medium transition active:scale-95">-1 cm</button>
+              <div class="text-[11px] text-slate-500 font-mono">Rango: 100 - 225 cm</div>
+              <button type="button" onclick="adjustValue('heightSlider', 1)" class="px-3 py-1 text-xs rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 font-medium transition active:scale-95">+1 cm</button>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="pt-4 flex flex-col sm:flex-row gap-3">
+            <button 
+              type="submit" 
+              class="w-full sm:flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-display font-extrabold tracking-wide uppercase text-sm sm:text-base flex items-center justify-center gap-2 shadow-glow-lime transition transform active:scale-[0.98]"
+            >
+              <span>Calcular y Recomendar Deportes</span>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
+            
+            <button 
+              type="button" 
+              onclick="resetCalculator()" 
+              title="Restablecer valores"
+              class="py-4 px-5 rounded-2xl border border-slate-800 hover:bg-slate-800/80 text-slate-400 hover:text-white transition flex items-center justify-center"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+
+        </form>
+      </section>
+
+      <aside class="lg:col-span-5 space-y-6">
+        
+        <!-- Official Table Card -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl backdrop-blur-xl">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+            <h2 class="font-display font-bold text-lg text-white uppercase tracking-wider flex items-center gap-2">
+              <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Clasificación Oficial del IMC
+            </h2>
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Rango</span>
+          </div>
+
+          <div class="space-y-2.5 text-xs font-medium" id="classificationLegend">
+            <!-- Underweight -->
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80 transition hover:border-sky-500/40" data-cat="underweight">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                <span class="text-slate-200">Bajo peso</span>
+              </div>
+              <span class="font-mono text-sky-400 font-bold">&lt; 18.5</span>
+            </div>
+
+            <!-- Normal -->
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80 transition hover:border-emerald-500/40" data-cat="normal">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                <span class="text-slate-200">Peso normal (saludable)</span>
+              </div>
+              <span class="font-mono text-emerald-400 font-bold">18.5 – 24.9</span>
+            </div>
+
+            <!-- Overweight -->
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80 transition hover:border-amber-500/40" data-cat="overweight">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <span class="text-slate-200">Sobrepeso</span>
+              </div>
+              <span class="font-mono text-amber-400 font-bold">25.0 – 29.9</span>
+            </div>
+
+            <!-- Obesity 1 -->
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80 transition hover:border-orange-500/40" data-cat="obese1">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                <span class="text-slate-200">Obesidad grado 1 (moderada)</span>
+              </div>
+              <span class="font-mono text-orange-400 font-bold">30.0 – 34.9</span>
+            </div>
+
+            <!-- Obesity 2 -->
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80 transition hover:border-rose-500/40" data-cat="obese2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                <span class="text-slate-200">Obesidad grado 2 (severa)</span>
+              </div>
+              <span class="font-mono text-rose-400 font-bold">35.0 – 39.9</span>
+            </div>
+
+            <!-- Obesity 3 -->
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80 transition hover:border-red-600/40" data-cat="obese3">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+                <span class="text-slate-200">Obesidad grado 3 (mórbida)</span>
+              </div>
+              <span class="font-mono text-red-500 font-bold">&ge; 40.0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pro-Tip Card -->
+        <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800/80 rounded-3xl p-5 text-slate-400 text-xs leading-relaxed space-y-2">
+          <div class="flex items-center gap-2 text-white font-semibold uppercase tracking-wider text-xs">
+            <svg class="w-4 h-4 text-brand-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Enfoque Deportivo Inteligente
+          </div>
+          <p>
+            El IMC es una métrica de referencia antropométrica. Para bajar de peso no sólo importa la cantidad de calorías quemadas, sino elegir deportes con <span class="text-slate-200 font-medium">adecuada absorción de impacto</span> para preservar rodillas y articulaciones mientras elevas el metabolismo.
+          </p>
+        </div>
+
+      </aside>
+
+    </div>
+  </main>
+
+  <div id="resultsModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 overflow-y-auto">
+    
+    <div id="modalBox" class="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl p-6 sm:p-8 my-auto transform scale-95 transition-all duration-300">
+      
+      <!-- Close Button -->
+      <button 
+        onclick="closeModal()" 
+        aria-label="Cerrar ventana"
+        class="absolute top-5 right-5 w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition active:scale-90"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Header: Score & Badge -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-brand-lime"></span>
+            Resultado del Análisis Fisiológico
+          </div>
+          <div class="flex items-baseline gap-3">
+            <span id="modalImcValue" class="font-display font-black text-5xl sm:text-6xl text-white tracking-tight">24.8</span>
+            <span class="text-xs uppercase font-bold text-slate-400">kg/m²</span>
+          </div>
+        </div>
+
+        <div class="sm:text-right">
+          <div class="text-xs text-slate-400 uppercase font-semibold mb-1">Clasificación</div>
+          <span id="modalRangeBadge" class="inline-flex items-center px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold tracking-wide uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            Peso Normal (Saludable)
+          </span>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Strip -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 my-5">
+        <div class="p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block">Peso Saludable Ideal</span>
+          <span id="idealWeightRange" class="text-sm font-bold text-slate-200">56.7 – 76.3 kg</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block">Diferencia Estimada</span>
+          <span id="weightDelta" class="text-sm font-bold text-brand-lime">En rango óptimo</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 col-span-2 sm:col-span-1">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block">Zona de Impacto</span>
+          <span id="impactGuidance" class="text-sm font-bold text-cyan-400">Impacto Libre</span>
+        </div>
+      </div>
+
+      <!-- Sports Recommendations Section -->
+      <div class="mt-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-display font-bold text-base sm:text-lg text-white uppercase tracking-wider flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Deportes Recomendados para tu Rango
+          </h3>
+          <span class="text-[11px] text-slate-400 font-medium">Basado en tu IMC</span>
+        </div>
+
+        <p id="recommendationIntro" class="text-xs text-slate-300 mb-4 leading-relaxed">
+          Para este rango, se priorizan actividades orientadas a...
+        </p>
+
+        <!-- Sports Cards Grid -->
+        <div id="sportsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="mt-6 pt-5 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <span class="text-[11px] text-slate-500 text-center sm:text-left">
+          *Consulta a un especialista o entrenador antes de iniciar rutinas de alta intensidad.
+        </span>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button 
+            type="button" 
+            onclick="copyResultsSummary()" 
+            class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-95"
+          >
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+            </svg>
+            <span id="copyBtnText">Copiar Resumen</span>
+          </button>
+          
+          <button 
+            type="button" 
+            onclick="closeModal()" 
+            class="flex-1 sm:flex-initial px-6 py-2.5 rounded-xl bg-brand-lime hover:bg-emerald-400 text-slate-950 text-xs font-extrabold uppercase tracking-wider transition active:scale-95"
+          >
+            Entendido
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border border-emerald-500/50 text-white px-5 py-3 rounded-2xl shadow-xl opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2 text-xs font-semibold">
+    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+    <span id="toastMsg">Mensaje copiado</span>
+  </div>
+
+  <footer class="w-full border-t border-slate-900 py-6 mt-12 text-center text-xs text-slate-500">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>KINETIC Performance Suite &copy; 2026 • Evaluación de Composición Corporal</p>
+      <p class="font-mono text-[11px] text-slate-600">Fórmula: Peso (kg) / [Altura (m)]²</p>
+    </div>
+  </footer>
+
+  <script>
+    const BMI_DATABASE = {
+      underweight: {
+        key: 'underweight',
+        name: 'Bajo peso',
+        sub: 'Menor a 18.5',
+        colorClass: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+        impact: 'Cuidado Articular / Masa Muscular',
+        intro: 'Tu IMC indica un peso inferior al promedio saludable. En lugar de un déficit calórico enfocado en perder peso, se recomienda fortalecer la masa muscular, optimizar el apetito y realizar actividades deportivas de tonificación.',
+        sports: [
+          {
+            title: 'Entrenamiento de Fuerza / Calistenia',
+            tag: 'Hipertrofia',
+            intensity: 'Moderada / Progresiva',
+            burn: '250 - 400 kcal/h',
+            desc: 'Estimula el aumento de masa muscular magra y densidad ósea sin desgastar tus reservas energéticas.',
+            icon: '🏋️‍♂️'
+          },
+          {
+            title: 'Natación Recreativa y Técnica',
+            tag: 'Fuerza Global',
+            intensity: 'Moderada',
+            burn: '350 - 450 kcal/h',
+            desc: 'Desarrolla capacidad pulmonar y tono simétrico en todo el torso y extremidades sin impacto lesivo.',
+            icon: '🏊'
+          },
+          {
+            title: 'Yoga Deportivo / Pilates Reformer',
+            tag: 'Core y Postura',
+            intensity: 'Suave - Media',
+            burn: '200 - 300 kcal/h',
+            desc: 'Refuerza tendones, mejora el equilibrio y promueve una óptima salud metabólica y flexibilidad.',
+            icon: '🧘'
+          },
+          {
+            title: 'Ciclismo Recreativo en Terreno Plano',
+            tag: 'Cardio Suave',
+            intensity: 'Baja',
+            burn: '280 - 350 kcal/h',
+            desc: 'Mantiene activa la circulación y la potencia en piernas evitando un gasto metabólico excesivo.',
+            icon: '🚴'
+          }
+        ]
+      },
+      normal: {
+        key: 'normal',
+        name: 'Peso normal (saludable)',
+        sub: '18.5 – 24.9',
+        colorClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+        impact: 'Impacto Libre / Rendimiento Total',
+        intro: '¡Excelente condición! Te encuentras en el rango ideal. Puedes practicar cualquier disciplina atlética para mantener tu porcentaje graso bajo, tonificar y potenciar tu resistencia cardiovascular.',
+        sports: [
+          {
+            title: 'Running y Trail Deportivo',
+            tag: 'Alta Quema Aeróbica',
+            intensity: 'Media a Alta',
+            burn: '600 - 850 kcal/h',
+            desc: 'Excelente para mantener un gasto calórico elevado, definir piernas y elevar el umbral anaeróbico.',
+            icon: '🏃'
+          },
+          {
+            title: 'Entrenamientos HIIT / Cross-Training',
+            tag: 'Gasto Metabólico Post-Entreno',
+            intensity: 'Alta',
+            burn: '500 - 800 kcal/h',
+            desc: 'Combina intervalos explosivos para quemar grasa acumulada mientras preservas la potencia muscular.',
+            icon: '⚡'
+          },
+          {
+            title: 'Natación Estilo Crol y Mariposa',
+            tag: 'Aeróbico Completo',
+            intensity: 'Media a Alta',
+            burn: '550 - 750 kcal/h',
+            desc: 'Acelera el metabolismo general, tonifica la espalda y abdomen con resistencia natural del agua.',
+            icon: '🏊‍♂️'
+          },
+          {
+            title: 'Fútbol, Básquetbol o Pádel',
+            tag: 'Cardio Interválico',
+            intensity: 'Alta / Competitiva',
+            burn: '500 - 700 kcal/h',
+            desc: 'Deportes dinámicos de cambios de ritmo constantes que maximizan la quema de tejido adiposo.',
+            icon: '🎾'
+          }
+        ]
+      },
+      overweight: {
+        key: 'overweight',
+        name: 'Sobrepeso',
+        sub: '25.0 – 29.9',
+        colorClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+        impact: 'Impacto Controlado',
+        intro: 'Estás en una zona idónea para iniciar un reacondicionamiento enfocado en déficit energético. Las mejores disciplinas son aquellas que combinan quema calórica continua protegiendo rodillas y tobillos.',
+        sports: [
+          {
+            title: 'Ciclismo de Ruta o Spinning',
+            tag: 'Quema Calórica Segura',
+            intensity: 'Moderada / Variable',
+            burn: '500 - 700 kcal/h',
+            desc: 'Mantiene las pulsaciones en zona quema-grasa (Zona 2) sin someter las rodillas a impacto contra el asfalto.',
+            icon: '🚴'
+          },
+          {
+            title: 'Natación y Acua-Jogging',
+            tag: 'Cero Impacto Articular',
+            intensity: 'Media',
+            burn: '450 - 650 kcal/h',
+            desc: 'El agua sostiene tu peso corporal, permitiéndote quemar gran volumen calórico con máxima seguridad.',
+            icon: '🌊'
+          },
+          {
+            title: 'Caminata Rápida con Pendiente (Incline Walk)',
+            tag: 'Cardio Zona 2',
+            intensity: 'Moderada',
+            burn: '380 - 550 kcal/h',
+            desc: 'Caminar a 5-6 km/h con inclinación del 6-12% quema tantas calorías como trotar, pero cuidando tus articulaciones.',
+            icon: '🥾'
+          },
+          {
+            title: 'Remo Indoor (Ergómetro)',
+            tag: 'Cuerpo Completo (85% Músculos)',
+            intensity: 'Moderada a Alta',
+            burn: '550 - 750 kcal/h',
+            desc: 'Trabaja piernas, espalda, abdomen y brazos simultáneamente para acelerar la pérdida de peso graso.',
+            icon: '🚣'
+          }
+        ]
+      },
+      obese1: {
+        key: 'obese1',
+        name: 'Obesidad grado 1 (moderada)',
+        sub: '30.0 – 34.9',
+        colorClass: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
+        impact: 'Bajo Impacto Articular Recomendado',
+        intro: 'Para perder peso de manera constante y sostenible, la clave es priorizar disciplinas de bajo impacto para rodillas y columna, pero que activen grandes grupos musculares con regularidad.',
+        sports: [
+          {
+            title: 'Aquafitness / Natación Continua',
+            tag: 'Ideal para Bajar de Peso',
+            intensity: 'Moderada',
+            burn: '400 - 600 kcal/h',
+            desc: 'Disminuye la carga sobre cartílagos en más del 80% mientras la resistencia líquida quema calorías.',
+            icon: '🏊'
+          },
+          {
+            title: 'Bicicleta Estática o Elíptica',
+            tag: 'Cardio de Movimiento Fluido',
+            intensity: 'Controlada',
+            burn: '400 - 550 kcal/h',
+            desc: 'Movimiento continuo y guiado sin choque de talón, excelente para sesiones sostenidas de 30 a 50 minutos.',
+            icon: '🚴‍♂️'
+          },
+          {
+            title: 'Marcha Activa / Senderismo Plano',
+            tag: 'Consumo Lipídico',
+            intensity: 'Suave a Moderada',
+            burn: '300 - 450 kcal/h',
+            desc: 'Caminar diariamente a buen ritmo promueve la movilización de ácidos grasos sin sobrecargar la espalda.',
+            icon: '🚶'
+          },
+          {
+            title: 'Circuitos de Fuerza en Máquinas Guiadas',
+            tag: 'Preservación Muscular',
+            intensity: 'Moderada',
+            burn: '300 - 420 kcal/h',
+            desc: 'Aumenta el metabolismo basal en reposo utilizando máquinas que garantizan una postura correcta.',
+            icon: '⚙️'
+          }
+        ]
+      },
+      obese2: {
+        key: 'obese2',
+        name: 'Obesidad grado 2 (severa)',
+        sub: '35.0 – 39.9',
+        colorClass: 'bg-rose-500/20 text-rose-400 border-rose-500/40',
+        impact: 'Impacto Muy Bajo / Soporte Asistido',
+        intro: 'En esta etapa es fundamental elegir deportes hidrodinámicos o de apoyo reclinado. El objetivo principal es reactivar la función cardiovascular y oxidar grasa sin provocar inflamación articular.',
+        sports: [
+          {
+            title: 'Gimnasia Acuática Asistida (Hidroterapia)',
+            tag: 'Prioridad N° 1',
+            intensity: 'Adaptada',
+            burn: '350 - 500 kcal/h',
+            desc: 'La flotabilidad neutraliza la presión en columna y caderas, permitiendo una movilidad amplia y placentera.',
+            icon: '💧'
+          },
+          {
+            title: 'Bicicleta Reclinada (Recumbent Bike)',
+            tag: 'Espalda Apoyada',
+            intensity: 'Baja a Moderada',
+            burn: '320 - 450 kcal/h',
+            desc: 'Brinda soporte lumbar y distribuye el peso en el asiento para pedalear sin fatiga prematura.',
+            icon: '🚲'
+          },
+          {
+            title: 'Paseos Fraccionados en Terreno Blando',
+            tag: 'Cardio Intervalado Suave',
+            intensity: 'Progresiva',
+            burn: '250 - 380 kcal/h',
+            desc: 'Bloques de caminata de 15 minutos en césped o pista atlética con descansos para facilitar el gasto energético diario.',
+            icon: '👟'
+          },
+          {
+            title: 'Ejercicios de Resistencia con Bandas Elásticas',
+            tag: 'Tono Muscular Seguro',
+            intensity: 'Suave',
+            burn: '200 - 320 kcal/h',
+            desc: 'Permite trabajar fuerza sentado o de pie con tensión suave y progresiva que activa el metabolismo.',
+            icon: '🎗️'
+          }
+        ]
+      },
+      obese3: {
+        key: 'obese3',
+        name: 'Obesidad grado 3 (mórbida)',
+        sub: 'Mayor o igual a 40',
+        colorClass: 'bg-red-500/20 text-red-400 border-red-500/40',
+        impact: 'Cero Impacto / Supervisión Recomendada',
+        intro: 'Es esencial un inicio deportivo muy cuidadoso y planificado. Los deportes en piscina y la actividad estática con descarga de peso son la mejor estrategia para iniciar la pérdida de peso con seguridad absoluta.',
+        sports: [
+          {
+            title: 'Movilidad en Piscina / Aqua-Walking',
+            tag: 'Pilar Fundamental',
+            intensity: 'Suave y Guiada',
+            burn: '300 - 450 kcal/h',
+            desc: 'Desplazamientos en agua templada. Elimina el impacto del peso sobre las rodillas y despierta el gasto calórico.',
+            icon: '🫧'
+          },
+          {
+            title: 'Pedalier de Brazos y Piernas (Sentado)',
+            tag: 'Acondicionamiento Cero Carga',
+            intensity: 'Controlada',
+            burn: '180 - 280 kcal/h',
+            desc: 'Permite activar la circulación de miembros superiores e inferiores desde una silla ergonómica.',
+            icon: '💺'
+          },
+          {
+            title: 'Caminatas Cortas de Activación (Micro-sesiones)',
+            tag: 'Hábito Metabólico',
+            intensity: 'Muy Suave',
+            burn: '150 - 250 kcal/h',
+            desc: 'Caminatas lentas de 5 a 10 minutos repartidas a lo largo del día para reducir la resistencia a la insulina.',
+            icon: '🌱'
+          },
+          {
+            title: 'Respiración Diafragmática y Gimnasia en Asiento',
+            tag: 'Movilidad Articular',
+            intensity: 'Terapéutica',
+            burn: '120 - 200 kcal/h',
+            desc: 'Movimientos coordinados de extremidades que restauran la energía basal y preparan el cuerpo para mayores desafíos.',
+            icon: '🧘‍♂️'
+          }
+        ]
+      }
+    };
+
+    const weightSlider = document.getElementById('weightSlider');
+    const heightSlider = document.getElementById('heightSlider');
+    const weightDisplay = document.getElementById('weightDisplay');
+    const heightDisplay = document.getElementById('heightDisplay');
+
+    function syncSliders() {
+      weightDisplay.textContent = parseFloat(weightSlider.value).toFixed(1);
+      heightDisplay.textContent = heightSlider.value;
+    }
+
+    weightSlider.addEventListener('input', syncSliders);
+    heightSlider.addEventListener('input', syncSliders);
+
+    function adjustValue(sliderId, step) {
+      const slider = document.getElementById(sliderId);
+      let newVal = parseFloat(slider.value) + step;
+      if (newVal >= parseFloat(slider.min) && newVal <= parseFloat(slider.max)) {
+        slider.value = newVal;
+        syncSliders();
+      }
+    }
+
+    function resetCalculator() {
+      weightSlider.value = 76;
+      heightSlider.value = 175;
+      document.getElementById('ageInput').value = 28;
+      document.getElementById('activityLevel').value = 'moderate';
+      syncSliders();
+      highlightLegend(null);
+      showToast('Valores restaurados por defecto');
+    }
+
+    function getBMICategory(bmi) {
+      if (bmi < 18.5) {
+        return BMI_DATABASE.underweight;
+      } else if (bmi <= 24.9) {
+        return BMI_DATABASE.normal;
+      } else if (bmi <= 29.9) {
+        return BMI_DATABASE.overweight;
+      } else if (bmi <= 34.9) {
+        return BMI_DATABASE.obese1;
+      } else if (bmi <= 39.9) {
+        return BMI_DATABASE.obese2;
+      } else {
+        return BMI_DATABASE.obese3;
+      }
+    }
+
+    function highlightLegend(categoryKey) {
+      const rows = document.querySelectorAll('#classificationLegend [data-cat]');
+      rows.forEach(row => {
+        const isCurrent = row.getAttribute('data-cat') === categoryKey;
+        if (isCurrent) {
+          row.classList.add('ring-2', 'ring-brand-lime', 'bg-slate-800/80');
+        } else {
+          row.classList.remove('ring-2', 'ring-brand-lime', 'bg-slate-800/80');
+        }
+      });
+    }
+
+    let lastSummaryText = '';
+
+    function calculateBMI() {
+      const weight = parseFloat(weightSlider.value);
+      const heightCm = parseFloat(heightSlider.value);
+      
+      if (!weight || !heightCm || heightCm <= 0) {
+        showToast('Por favor verifica los valores ingresados');
+        return;
+      }
+
+      const heightM = heightCm / 100;
+      const bmi = weight / (heightM * heightM);
+      const roundedBMI = Math.round(bmi * 10) / 10;
+      
+      const category = getBMICategory(roundedBMI);
+      highlightLegend(category.key);
+
+      // Healthy weight range based on WHO 18.5 - 24.9
+      const minHealthyWeight = (18.5 * heightM * heightM).toFixed(1);
+      const maxHealthyWeight = (24.9 * heightM * heightM).toFixed(1);
+
+      // Delta calculation
+      let deltaMsg = '';
+      if (roundedBMI < 18.5) {
+        const diff = (minHealthyWeight - weight).toFixed(1);
+        deltaMsg = `Faltan ~${diff} kg para peso normal`;
+      } else if (roundedBMI > 24.9) {
+        const diff = (weight - maxHealthyWeight).toFixed(1);
+        deltaMsg = `Exceso de ~${diff} kg para normal`;
+      } else {
+        deltaMsg = 'En rango óptimo saludable';
+      }
+
+      // Fill modal contents
+      document.getElementById('modalImcValue').textContent = roundedBMI.toFixed(1);
+      
+      const badge = document.getElementById('modalRangeBadge');
+      badge.textContent = category.name;
+      badge.className = `inline-flex items-center px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold tracking-wide uppercase border ${category.colorClass}`;
+
+      document.getElementById('idealWeightRange').textContent = `${minHealthyWeight} – ${maxHealthyWeight} kg`;
+      document.getElementById('weightDelta').textContent = deltaMsg;
+      document.getElementById('impactGuidance').textContent = category.impact;
+      document.getElementById('recommendationIntro').textContent = category.intro;
+
+      // Populate sports grid
+      const sportsGrid = document.getElementById('sportsGrid');
+      sportsGrid.innerHTML = '';
+
+      category.sports.forEach(sport => {
+        const card = document.createElement('div');
+        card.className = 'p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between group';
+        card.innerHTML = `
+          <div>
+            <div class="flex items-start justify-between gap-2 mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="text-xl group-hover:scale-110 transition transform">${sport.icon}</span>
+                <h4 class="font-display font-bold text-sm text-white">${sport.title}</h4>
+              </div>
+              <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-800 text-emerald-400 border border-slate-700 shrink-0">
+                ${sport.tag}
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 leading-snug mb-3">${sport.desc}</p>
+          </div>
+          <div class="flex items-center justify-between text-[10px] font-medium pt-2 border-t border-slate-900 text-slate-500">
+            <span>Intensidad: <strong class="text-slate-300 font-semibold">${sport.intensity}</strong></span>
+            <span class="font-mono text-emerald-400 font-bold">${sport.burn}</span>
+          </div>
+        `;
+        sportsGrid.appendChild(card);
+      });
+
+      // Prepare clipboard summary
+      lastSummaryText = `KINETIC IMC Reporte:\n• IMC: ${roundedBMI.toFixed(1)} (${category.name})\n• Rango saludable sugerido: ${minHealthyWeight} - ${maxHealthyWeight} kg\n• Deportes recomendados para quema/condición: ${category.sports.map(s => s.title).join(', ')}.`;
+
+      openModal();
+    }
+
+    const modal = document.getElementById('resultsModal');
+    const modalBox = document.getElementById('modalBox');
+
+    function openModal() {
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      modalBox.classList.remove('scale-95');
+      modalBox.classList.add('scale-100');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      modalBox.classList.remove('scale-100');
+      modalBox.classList.add('scale-95');
+      document.body.style.overflow = '';
+      
+      const copyText = document.getElementById('copyBtnText');
+      if (copyText) copyText.textContent = 'Copiar Resumen';
+    }
+
+    // Close on outside click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.classList.contains('pointer-events-none')) {
+        closeModal();
+      }
+    });
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.textContent = message;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    function copyResultsSummary() {
+      if (!lastSummaryText) return;
+
+      const textarea = document.createElement('textarea');
+      textarea.value = lastSummaryText;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      
+      try {
+        const success = document.execCommand('copy');
+        if (success) {
+          document.getElementById('copyBtnText').textContent = '¡Copiado!';
+          showToast('Resumen deportivo copiado al portapapeles');
+        } else {
+          showToast('No se pudo copiar el texto');
+        }
+      } catch (err) {
+        showToast('Error al intentar copiar');
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+
+    // Initialize display values on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      syncSliders();
+    });
+  </script>
+</body>
+</html>
