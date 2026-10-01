@@ -49,15 +49,15 @@ Este proyecto nace como un **ejercicio práctico de programación** para reforza
 
 ### 🧮 Formulario — Perfil Deportivo
 
-![Formulario](assets/screenshots/formulario.png)
+![Formulario](img/captura_formulario.png)
 
 ### 📊 Resultado del Análisis Fisiológico
 
-![Resultado](assets/screenshots/resultado.png)
+![Resultado](img/captura_resultados.png)
 
 ### 🏃 Deportes Recomendados
 
-![Recomendaciones](assets/screenshots/recomendaciones.png)
+![Recomendaciones](img/captura_deportes.png)
 
 ---
 
